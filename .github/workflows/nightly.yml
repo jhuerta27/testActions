@@ -1,0 +1,71 @@
+name: Nightly
+on:
+    workflow_dispatch:
+    schedule:
+        -   cron: '30 12 * * *'
+
+jobs:
+    build:
+        name: Nightly Build
+        runs-on: ubuntu-latest
+        steps:
+            ###########################################################
+            # CHECK OUT THE REPO
+            ###########################################################
+            -   name: Checkout
+                uses: actions/checkout@v3
+
+            ###########################################################
+            # SET OUTPUT VARIABLES
+            ###########################################################
+            -   name: Set output variables
+                id: vars
+                run: |
+                    echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+                    echo "msg_short=$(git show -s --format=%B | head -n 1)" >> $GITHUB_OUTPUT
+
+            ###########################################################
+            # https://github.com/actions/setup-java
+            ###########################################################
+            -   name: Setup JDK
+                uses: actions/setup-java@v3
+                with:
+                    distribution: 'zulu'
+                    java-version: '17'
+                    java-package: jdk
+
+            ###########################################################
+            # https://github.com/android-actions/setup-android
+            ###########################################################
+            -   name: Setup Android SDK
+                uses: android-actions/setup-android@v2
+
+            -   name: Install NDK
+                run: |
+                    sdkmanager --install "ndk;25.2.9519653"
+                    yes | sdkmanager --licenses
+
+            ###########################################################
+            # BUILD
+            ###########################################################
+            -   name: Build project
+                run: ./gradlew build
+
+            ###########################################################
+            # ASSEMBLE
+            ###########################################################
+            -   name: Assemble TTM debug APK
+                run: ./gradlew app:assembleDebug
+
+            ###########################################################
+            # UPDATE OUR NIGHTLY
+            ###########################################################
+            -   name: Create Release
+                uses: ncipollo/release-action@v1
+                with:
+                  name: nightly
+                  tag: nightly
+                  generateReleaseNotes: true
+                  draft: false
+                  prerelease: true
+                  allowUpdates: true
