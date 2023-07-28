@@ -61,11 +61,8 @@ jobs:
             # UPDATE OUR NIGHTLY
             ###########################################################
             -   name: Create Release
-                uses: ncipollo/release-action@v1
+                uses: ncipollo/release-action@v1.12.0
                 with:
                   name: nightly
                   tag: nightly
                   generateReleaseNotes: true
-                  draft: false
-                  prerelease: true
-                  allowUpdates: true
